@@ -182,24 +182,6 @@ GROQ_API_KEY=your_groq_api_key_here
 BRIA_API_KEY=your_bria_api_key_here
 ```
 
-## 🎬 Demo Video
-
-[Link to demo video]
-
-## 📸 Screenshots
-
-### Home Page
-![Home Page](screenshots/home.png)
-
-### 360° Journey View
-![Journey View](screenshots/journey.png)
-
-### Quiz Interface
-![Quiz](screenshots/quiz.png)
-
-### Completion Certificate
-![Certificate](screenshots/certificate.png)
-
 ## 🚀 Future Enhancements
 
 - VR headset support
