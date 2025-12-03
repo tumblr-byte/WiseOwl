@@ -1,0 +1,17 @@
+# Django
+Django==5.2.8
+
+# API Requests
+requests==2.31.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# AI Integration
+groq==0.4.1
+
+# Additional utilities
+Pillow==10.1.0

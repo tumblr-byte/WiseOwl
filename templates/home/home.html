@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}WiseOwl - Learn Through Time{% endblock %}
+
+{% block content %}
+<div class="wiseowl-home">
+    <!-- Animated Owl Guide -->
+    <div class="owl-container" id="owlContainer">
+        <div class="owl-character">
+            <div class="owl-body">
+                <div class="owl-face">
+                    <div class="owl-eyes">
+                        <div class="owl-eye left">
+                            <div class="pupil"></div>
+                        </div>
+                        <div class="owl-eye right">
+                            <div class="pupil"></div>
+                        </div>
+                    </div>
+                    <div class="owl-beak"></div>
+                </div>
+                <div class="owl-wings">
+                    <div class="wing left"></div>
+                    <div class="wing right"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Owl Speech Bubble -->
+        <div class="owl-speech" id="owlSpeech">
+            <p id="owlMessage">Hello! I'm WiseOwl, your guide through time. Ready to explore?</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="home-content">
+        <!-- LEFT SIDE -->
+        <div class="home-left">
+            <!-- Logo -->
+            <div class="logo-section">
+                <img src="{% static 'logo.png' %}" alt="WiseOwl" class="main-logo">
+                <h1 class="brand-title">WiseOwl</h1>
+                <p class="brand-subtitle">Learn History & Geography Through Immersive Time Travel</p>
+            </div>
+
+            <!-- Demo Journeys -->
+            <div class="demo-section">
+                <h2 style="color:white;margin-bottom:1rem;font-size:1.2rem;">
+                    <i class="fas fa-star" style="color:#E4C77F;"></i> Try Demo Journeys
+                </h2>
+                <div class="demo-cards">
+                    <a href="{% url 'home:demo_journey' 'ancient-rome' %}" class="demo-card">
+                        <div class="demo-icon">🏛️</div>
+                        <h3>Ancient Rome</h3>
+                        <p>Explore the Roman Forum</p>
+                        <span class="demo-badge">Instant!</span>
+                    </a>
+                    <a href="{% url 'home:demo_journey' 'amazon-rainforest' %}" class="demo-card">
+                        <div class="demo-icon">🌳</div>
+                        <h3>Amazon Rainforest</h3>
+                        <p>Journey through nature</p>
+                        <span class="demo-badge">Instant!</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Subject Selection -->
+            <div class="subject-selection" id="subjectSelection">
+                <h2>Create Your Own Journey:</h2>
+                <div class="subject-cards">
+                    <div class="subject-card" onclick="selectSubject('history')">
+                        <i class="fas fa-landmark"></i>
+                        <h3>History</h3>
+                        <p>Travel through time</p>
+                    </div>
+                    <div class="subject-card" onclick="selectSubject('geography')">
+                        <i class="fas fa-globe-americas"></i>
+                        <h3>Geography</h3>
+                        <p>Explore the world</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Input (Hidden initially) -->
+            <div class="topic-section" id="topicSection" style="display:none;">
+                <form method="POST" action="{% url 'home:generate_journey' %}" id="topicForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="subject_type" id="subjectType" value="history">
+                    
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            name="topic" 
+                            id="topicInput"
+                            placeholder="Enter a topic... (e.g., French Revolution, Amazon Rainforest)" 
+                            class="topic-input"
+                            required
+                        >
+                    </div>
+                    
+                    <button type="submit" class="journey-btn">
+                        <i class="fas fa-rocket"></i>
+                        <span>Start Time Travel</span>
+                    </button>
+                </form>
+                
+                <button class="back-btn" onclick="backToSubjects()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="home-right">
+            <!-- Stats Dashboard -->
+            {% if recent_topics %}
+            <div class="stats-dashboard">
+                <h3 style="color:white;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+                    <i class="fas fa-chart-line" style="color:#E4C77F;"></i> Your Learning Stats
+                </h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value">{{ stats.total_topics }}</div>
+                        <div class="stat-label">Topics Explored</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔓</div>
+                        <div class="stat-value">{{ stats.total_scenes }}</div>
+                        <div class="stat-label">Scenes Unlocked</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value">{{ stats.total_score }}</div>
+                        <div class="stat-label">Total Points</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value">{{ stats.completed }}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Journeys -->
+            <div class="recent-section">
+                <h3><i class="fas fa-history"></i> Recent Journeys</h3>
+                <div class="recent-grid">
+                    {% for topic in recent_topics %}
+                    <a href="{% url 'home:journey' topic.id %}" class="recent-card">
+                        <div class="recent-icon">
+                            <i class="fas fa-{% if topic.subject_type == 'history' %}landmark{% else %}globe{% endif %}"></i>
+                        </div>
+                        <div class="recent-info">
+                            <h4>{{ topic.topic }}</h4>
+                            <p>{{ topic.subject_type|title }} • {{ topic.total_score }} pts</p>
+                        </div>
+                        <div class="recent-progress">
+                            {{ topic.scenes_unlocked|length }}/3
+                            {% if topic.completed %}
+                            <i class="fas fa-certificate" style="color:#E4C77F;margin-left:0.3rem;" title="Completed!"></i>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Welcome Message for New Users -->
+            <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:2px solid rgba(228,199,127,0.3);border-radius:16px;padding:3rem;text-align:center;">
+                <div style="font-size:4rem;margin-bottom:1rem;">🦉</div>
+                <h2 style="color:#E4C77F;font-size:2rem;margin-bottom:1rem;">Welcome to WiseOwl!</h2>
+                <p style="color:rgba(255,255,255,0.9);font-size:1.1rem;line-height:1.8;margin-bottom:2rem;">
+                    Start your immersive learning journey by trying our demo experiences or creating your own custom topic.
+                </p>
+                <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                    <div style="background:rgba(228,199,127,0.2);padding:1rem;border-radius:10px;flex:1;min-width:150px;">
+                        <div style="font-size:2rem;margin-bottom:0.5rem;">🎯</div>
+                        <div style="color:white;font-weight:600;">Explore 360° Scenes</div>
+                    </div>
+                    <div style="background:rgba(228,199,127,0.2);padding:1rem;border-radius:10px;flex:1;min-width:150px;">
+                        <div style="font-size:2rem;margin-bottom:0.5rem;">🎓</div>
+                        <div style="color:white;font-weight:600;">Take Quizzes</div>
+                    </div>
+                    <div style="background:rgba(228,199,127,0.2);padding:1rem;border-radius:10px;flex:1;min-width:150px;">
+                        <div style="font-size:2rem;margin-bottom:0.5rem;">🏆</div>
+                        <div style="color:white;font-weight:600;">Earn Certificates</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Logout -->
+    <div class="user-info">
+        <span>{{ user.username }}</span>
+        <a href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+</div>
+
+<script>
+let selectedSubject = '';
+
+// Owl blinks
+setInterval(() => {
+    document.querySelectorAll('.owl-eye').forEach(eye => {
+        eye.style.height = '5px';
+        setTimeout(() => eye.style.height = '30px', 150);
+    });
+}, 3000);
+
+// Select subject
+function selectSubject(subject) {
+    selectedSubject = subject;
+    document.getElementById('subjectType').value = subject;
+    document.getElementById('subjectSelection').style.display = 'none';
+    document.getElementById('topicSection').style.display = 'block';
+    
+    const messages = {
+        'history': "Great choice! Tell me which historical event you'd like to experience.",
+        'geography': "Wonderful! Which place would you like to explore?"
+    };
+    
+    document.getElementById('owlMessage').textContent = messages[subject];
+    document.getElementById('topicInput').focus();
+}
+
+function backToSubjects() {
+    document.getElementById('subjectSelection').style.display = 'block';
+    document.getElementById('topicSection').style.display = 'none';
+    document.getElementById('owlMessage').textContent = "Hello! I'm WiseOwl, your guide through time. Ready to explore?";
+}
+</script>
+{% endblock %}

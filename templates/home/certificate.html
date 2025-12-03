@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Certificate - {{ topic.topic }}{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #1A2A52 0%, #0a0a0a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.certificate-container {
+    max-width: 900px;
+    width: 100%;
+}
+
+.certificate {
+    background: white;
+    border-radius: 20px;
+    padding: 4rem 3rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 15px solid #E4C77F;
+    position: relative;
+    overflow: hidden;
+}
+
+.certificate::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    border: 3px solid #1A2A52;
+    border-radius: 10px;
+    pointer-events: none;
+}
+
+.cert-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.cert-owl {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.cert-title {
+    font-size: 3rem;
+    color: #1A2A52;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-family: 'Georgia', serif;
+}
+
+.cert-subtitle {
+    font-size: 1.2rem;
+    color: #E4C77F;
+    font-weight: 600;
+}
+
+.cert-body {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.cert-text {
+    font-size: 1.1rem;
+    color: #333;
+    line-height: 2;
+    margin-bottom: 2rem;
+}
+
+.cert-name {
+    font-size: 2.5rem;
+    color: #1A2A52;
+    font-weight: 700;
+    margin: 1.5rem 0;
+    font-family: 'Georgia', serif;
+    border-bottom: 3px solid #E4C77F;
+    display: inline-block;
+    padding-bottom: 0.5rem;
+}
+
+.cert-topic {
+    font-size: 1.8rem;
+    color: #E4C77F;
+    font-weight: 600;
+    margin: 1.5rem 0;
+}
+
+.cert-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin: 2rem 0;
+}
+
+.cert-stat {
+    text-align: center;
+}
+
+.cert-stat-value {
+    font-size: 2rem;
+    color: #1A2A52;
+    font-weight: 700;
+}
+
+.cert-stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.cert-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #E4C77F;
+}
+
+.cert-signature {
+    text-align: center;
+}
+
+.cert-sig-line {
+    width: 200px;
+    border-top: 2px solid #333;
+    margin-bottom: 0.5rem;
+}
+
+.cert-sig-name {
+    font-weight: 600;
+    color: #1A2A52;
+}
+
+.cert-sig-title {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.cert-date {
+    text-align: center;
+}
+
+.cert-actions {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.cert-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    margin: 0 0.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.cert-btn.primary {
+    background: #1A2A52;
+    color: white;
+}
+
+.cert-btn.secondary {
+    background: #E4C77F;
+    color: #1A2A52;
+}
+
+.cert-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+@media print {
+    body {
+        background: white;
+    }
+    .cert-actions {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="certificate-container">
+    <div class="certificate" id="certificate">
+        <div class="cert-header">
+            <div class="cert-owl">🦉</div>
+            <h1 class="cert-title">Certificate of Achievement</h1>
+            <p class="cert-subtitle">WiseOwl Educational Journey</p>
+        </div>
+        
+        <div class="cert-body">
+            <p class="cert-text">This certifies that</p>
+            
+            <div class="cert-name">{{ user.username|title }}</div>
+            
+            <p class="cert-text">has successfully completed the immersive learning journey</p>
+            
+            <div class="cert-topic">{{ topic.topic }}</div>
+            
+            <div class="cert-stats">
+                <div class="cert-stat">
+                    <div class="cert-stat-value">3/3</div>
+                    <div class="cert-stat-label">Scenes Explored</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">{{ topic.total_score }}</div>
+                    <div class="cert-stat-label">Points Earned</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">100%</div>
+                    <div class="cert-stat-label">Completion</div>
+                </div>
+            </div>
+            
+            <p class="cert-text" style="font-style:italic;color:#666;">
+                Demonstrating curiosity, dedication, and mastery of historical knowledge<br>
+                through interactive 360° exploration and assessment
+            </p>
+        </div>
+        
+        <div class="cert-footer">
+            <div class="cert-signature">
+                <div class="cert-sig-line"></div>
+                <div class="cert-sig-name">WiseOwl AI</div>
+                <div class="cert-sig-title">Educational Guide</div>
+            </div>
+            
+            <div class="cert-date">
+                <div class="cert-sig-line"></div>
+                <div class="cert-sig-name">{{ topic.created_at|date:"F d, Y" }}</div>
+                <div class="cert-sig-title">Date of Completion</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="cert-actions">
+        <button onclick="window.print()" class="cert-btn primary">
+            <i class="fas fa-print"></i> Print Certificate
+        </button>
+        <a href="{% url 'home:home' %}" class="cert-btn secondary">
+            <i class="fas fa-home"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

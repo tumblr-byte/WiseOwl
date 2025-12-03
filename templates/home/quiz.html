@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Quiz - {{ topic.topic }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.quiz-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1A2A52 0%, #0a0a0a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.quiz-box {
+    background: white;
+    border-radius: 20px;
+    max-width: 700px;
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.quiz-header {
+    background: linear-gradient(135deg, #1A2A52, #2D4A7C);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.quiz-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.quiz-header p {
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.quiz-progress {
+    background: rgba(255,255,255,0.2);
+    height: 6px;
+    margin-top: 1rem;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.quiz-progress-bar {
+    height: 100%;
+    background: #E4C77F;
+    transition: width 0.3s ease;
+}
+
+.quiz-content {
+    padding: 2.5rem;
+}
+
+.question-card {
+    display: none;
+}
+
+.question-card.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.question-number {
+    color: #E4C77F;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.question-text {
+    font-size: 1.3rem;
+    color: #1A2A52;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.option-btn {
+    background: #f8f9fc;
+    border: 2px solid #e0e0e0;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    color: #1A2A52;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.option-letter {
+    width: 35px;
+    height: 35px;
+    background: #1A2A52;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.option-btn:hover {
+    border-color: #E4C77F;
+    background: #fffbf0;
+    transform: translateX(5px);
+}
+
+.option-btn.selected {
+    border-color: #E4C77F;
+    background: #fffbf0;
+}
+
+.option-btn.selected .option-letter {
+    background: #E4C77F;
+    color: #1A2A52;
+}
+
+.option-btn.correct {
+    border-color: #4CAF50;
+    background: #e8f5e9;
+}
+
+.option-btn.correct .option-letter {
+    background: #4CAF50;
+}
+
+.option-btn.incorrect {
+    border-color: #f44336;
+    background: #ffebee;
+}
+
+.option-btn.incorrect .option-letter {
+    background: #f44336;
+}
+
+.option-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.explanation {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: #e3f2fd;
+    border-left: 4px solid #2196F3;
+    border-radius: 8px;
+    color: #1A2A52;
+}
+
+.explanation.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+.explanation strong {
+    color: #2196F3;
+}
+
+.quiz-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.quiz-btn {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quiz-btn.primary {
+    background: #1A2A52;
+    color: white;
+}
+
+.quiz-btn.primary:hover {
+    background: #2D4A7C;
+    transform: translateY(-2px);
+}
+
+.quiz-btn.primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Results Screen */
+.results-screen {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+}
+
+.results-screen.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+.results-icon {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+}
+
+.results-icon.pass {
+    color: #4CAF50;
+}
+
+.results-icon.fail {
+    color: #f44336;
+}
+
+.results-title {
+    font-size: 2rem;
+    color: #1A2A52;
+    margin-bottom: 1rem;
+}
+
+.results-score {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #E4C77F;
+    margin: 1rem 0;
+}
+
+.results-message {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.results-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.results-btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.results-btn.primary {
+    background: #1A2A52;
+    color: white;
+}
+
+.results-btn.secondary {
+    background: #E4C77F;
+    color: #1A2A52;
+}
+
+.results-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .quiz-content {
+        padding: 1.5rem;
+    }
+    
+    .question-text {
+        font-size: 1.1rem;
+    }
+    
+    .quiz-actions, .results-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quiz-container">
+    <div class="quiz-box">
+        <!-- Header -->
+        <div class="quiz-header">
+            <h1>Scene {{ scene.scene_number }} Quiz</h1>
+            <p>{{ topic.topic }}</p>
+            <div class="quiz-progress">
+                <div class="quiz-progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Content -->
+        <div class="quiz-content" id="quizContent">
+            {% for question in quiz_data.questions %}
+            <div class="question-card {% if forloop.first %}active{% endif %}" data-question="{{ forloop.counter0 }}">
+                <div class="question-number">Question {{ forloop.counter }} of {{ quiz_data.questions|length }}</div>
+                <div class="question-text">{{ question.question }}</div>
+                
+                <div class="options-list">
+                    {% for option in question.options %}
+                    <button class="option-btn" onclick="selectOption({{ forloop.counter0 }}, {{ forloop.parentloop.counter0 }})">
+                        <span class="option-letter">{{ forloop.counter|upper|slice:":1" }}</span>
+                        <span>{{ option }}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+                
+                <div class="explanation" id="explanation-{{ forloop.counter0 }}">
+                    <strong>Explanation:</strong> {{ question.explanation }}
+                </div>
+                
+                <div class="quiz-actions">
+                    {% if not forloop.last %}
+                    <button class="quiz-btn primary" id="next-{{ forloop.counter0 }}" onclick="nextQuestion()" disabled>
+                        Next Question <i class="fas fa-arrow-right"></i>
+                    </button>
+                    {% else %}
+                    <button class="quiz-btn primary" id="next-{{ forloop.counter0 }}" onclick="submitQuiz()" disabled>
+                        Submit Quiz <i class="fas fa-check"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen" id="resultsScreen">
+            <div class="results-icon" id="resultsIcon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h2 class="results-title" id="resultsTitle">Quiz Complete!</h2>
+            <div class="results-score" id="resultsScore">0/2</div>
+            <p class="results-message" id="resultsMessage"></p>
+            <div class="results-actions">
+                <a href="{% url 'home:journey' topic.id %}" class="results-btn primary">
+                    <i class="fas fa-arrow-left"></i> Back to Journey
+                </a>
+                <a href="#" class="results-btn secondary" id="nextSceneBtn" style="display:none;">
+                    Next Scene <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const quizData = {{ quiz_data|safe }};
+const topicId = {{ topic.id }};
+const sceneNumber = {{ scene.scene_number }};
+let currentQuestion = 0;
+let answers = [];
+let correctAnswers = [];
+
+// Initialize
+quizData.questions.forEach(q => {
+    answers.push(null);
+    correctAnswers.push(q.correct);
+});
+
+function selectOption(optionIndex, questionIndex) {
+    const card = document.querySelector(`[data-question="${questionIndex}"]`);
+    const options = card.querySelectorAll('.option-btn');
+    
+    // Mark selected
+    options.forEach((opt, idx) => {
+        opt.classList.remove('selected');
+        if (idx === optionIndex) {
+            opt.classList.add('selected');
+        }
+    });
+    
+    // Save answer
+    answers[questionIndex] = optionIndex;
+    
+    // Show correct/incorrect
+    const isCorrect = optionIndex === correctAnswers[questionIndex];
+    options[optionIndex].classList.add(isCorrect ? 'correct' : 'incorrect');
+    
+    // Show correct answer if wrong
+    if (!isCorrect) {
+        options[correctAnswers[questionIndex]].classList.add('correct');
+    }
+    
+    // Disable all options
+    options.forEach(opt => opt.disabled = true);
+    
+    // Show explanation
+    document.getElementById(`explanation-${questionIndex}`).classList.add('show');
+    
+    // Enable next button
+    document.getElementById(`next-${questionIndex}`).disabled = false;
+    
+    // Update progress
+    updateProgress();
+}
+
+function nextQuestion() {
+    document.querySelector(`[data-question="${currentQuestion}"]`).classList.remove('active');
+    currentQuestion++;
+    document.querySelector(`[data-question="${currentQuestion}"]`).classList.add('active');
+    updateProgress();
+}
+
+function updateProgress() {
+    const progress = ((currentQuestion + 1) / quizData.questions.length) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+}
+
+let isSubmitting = false;
+
+function submitQuiz() {
+    // Prevent double submission
+    if (isSubmitting) return;
+    isSubmitting = true;
+    
+    // Disable submit button
+    const submitBtn = document.getElementById(`next-${currentQuestion}`);
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    
+    // Calculate score
+    let correct = 0;
+    answers.forEach((ans, idx) => {
+        if (ans === correctAnswers[idx]) correct++;
+    });
+    
+    // Submit to server
+    fetch(`/submit-quiz/${topicId}/${sceneNumber}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ answers: answers })
+    })
+    .then(r => r.json())
+    .then(data => {
+        showResults(data);
+    })
+    .catch(err => {
+        alert('Error submitting quiz. Please try again.');
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Submit Quiz <i class="fas fa-check"></i>';
+    });
+}
+
+function showResults(data) {
+    document.getElementById('quizContent').style.display = 'none';
+    const resultsScreen = document.getElementById('resultsScreen');
+    resultsScreen.classList.add('show');
+    
+    const correct = data.correct;
+    const total = data.total;
+    const passed = correct >= 1;
+    
+    // Update results
+    document.getElementById('resultsScore').textContent = `${correct}/${total}`;
+    document.getElementById('resultsIcon').className = `results-icon ${passed ? 'pass' : 'fail'}`;
+    document.getElementById('resultsIcon').innerHTML = passed ? 
+        '<i class="fas fa-trophy"></i>' : 
+        '<i class="fas fa-times-circle"></i>';
+    
+    document.getElementById('resultsTitle').textContent = passed ? 
+        'Great Job!' : 
+        'Keep Learning!';
+    
+    let message = '';
+    if (correct === total) {
+        message = '🎉 Perfect score! You really know your stuff!';
+    } else if (passed) {
+        message = '👍 Good work! You passed and unlocked the next scene!';
+    } else {
+        message = '📚 Keep exploring and try again!';
+    }
+    
+    if (passed && sceneNumber < 3) {
+        message += ' The next scene is now unlocked!';
+        const nextBtn = document.getElementById('nextSceneBtn');
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.href = `{% url 'home:journey' topic.id %}?scene=${sceneNumber + 1}`;
+    }
+    
+    // Check if journey is complete
+    if (data.journey_complete) {
+        message = '🎉 CONGRATULATIONS! You completed the entire journey!';
+        document.getElementById('resultsTitle').textContent = 'Journey Complete!';
+        
+        // Show certificate button
+        const certBtn = document.createElement('a');
+        certBtn.href = `/certificate/${topicId}/`;
+        certBtn.className = 'results-btn primary';
+        certBtn.innerHTML = '<i class="fas fa-certificate"></i> Get Your Certificate';
+        certBtn.style.background = 'linear-gradient(135deg, #E4C77F, #D4B76F)';
+        certBtn.style.color = '#1A2A52';
+        document.querySelector('.results-actions').appendChild(certBtn);
+    }
+    
+    document.getElementById('resultsMessage').textContent = message;
+}
+</script>
+{% endblock %}

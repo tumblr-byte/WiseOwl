@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ topic.topic }} - FIBO{% endblock %}
+
+{% block extra_css %}
+<!-- Pannellum 360 Viewer CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.immersive-container {
+    width: 100vw;
+    height: 100vh;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 360 Panorama Container */
+#panorama {
+    width: 100%;
+    height: 100%;
+}
+
+/* Fallback Image Viewer with Pan/Zoom */
+.image-viewer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+}
+
+.image-viewer:active { cursor: grabbing; }
+
+.viewer-image {
+    position: absolute;
+    min-width: 150%;
+    min-height: 100%;
+    object-fit: cover;
+    transition: transform 0.1s ease-out;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Top Navigation */
+.top-nav {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    z-index: 1000;
+}
+
+.topic-title {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.topic-title i { color: #E4C77F; margin-right: 0.5rem; }
+
+.nav-buttons { display: flex; gap: 1rem; }
+
+.nav-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover { background: #E4C77F; color: #1A2A52; }
+
+/* Info Panel - Left Side */
+.info-panel {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 300px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    z-index: 100;
+    border: 1px solid rgba(255,255,255,0.1);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.panel-header {
+    color: #E4C77F;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-content {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Quiz Panel - Right Side */
+.quiz-panel {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    z-index: 100;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.quiz-question {
+    color: white;
+    font-size: 1rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: rgba(228,199,127,0.1);
+    border-radius: 10px;
+    border-left: 3px solid #E4C77F;
+}
+
+.hint-box {
+    background: rgba(255,255,255,0.05);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    display: none;
+}
+
+.hint-box.show { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.answer-box {
+    background: linear-gradient(135deg, #1A2A52, #E4C77F);
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: none;
+}
+
+.answer-box.show { display: block; animation: scaleIn 0.5s ease; }
+
+@keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.quiz-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    transition: all 0.3s;
+}
+
+.hint-btn { background: rgba(255,255,255,0.1); color: white; }
+.hint-btn:hover { background: rgba(255,255,255,0.2); }
+.answer-btn { background: #E4C77F; color: #1A2A52; }
+.answer-btn:hover { transform: scale(1.02); }
+
+/* Controls at bottom */
+.bottom-controls {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1rem;
+    z-index: 100;
+}
+
+.control-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+}
+
+.control-btn:hover { background: #E4C77F; color: #1A2A52; }
+
+/* Drag instruction */
+.drag-hint {
+    position: absolute;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    text-align: center;
+    z-index: 50;
+    animation: pulse 2s infinite;
+}
+
+.drag-hint i { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+
+@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+/* Mobile */
+@media (max-width: 900px) {
+    .info-panel, .quiz-panel { display: none; }
+    .topic-title { font-size: 1rem; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="immersive-container">
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <div class="topic-title">
+            <i class="fas fa-vr-cardboard"></i>
+            {{ topic.topic }}
+        </div>
+        <div class="nav-buttons">
+            <a href="{% url 'home:home' %}" class="nav-btn">
+                <i class="fas fa-plus"></i> New
+            </a>
+            <a href="{% url 'home:logout' %}" class="nav-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- 360 Panorama Viewer -->
+    {% if topic.image_url %}
+    <div id="panorama"></div>
+    {% else %}
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:white;">
+        <div style="text-align:center;">
+            <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:#E4C77F;"></i>
+            <p style="margin-top:1rem;">Generating immersive visual...</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Info Panel (Left) -->
+    <div class="info-panel">
+        <div class="panel-header">
+            <i class="fas fa-book-open"></i> About This Scene
+        </div>
+        <div class="info-content">
+            {{ topic.summary }}
+        </div>
+        <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1);">
+            <div class="panel-header" style="margin-bottom:0.5rem;">
+                <i class="fas fa-info-circle"></i> Details
+            </div>
+            <div style="color:rgba(255,255,255,0.7); font-size:0.85rem;">
+                <p><strong>Mode:</strong> {{ topic.mode|title }}</p>
+                <p><strong>Type:</strong> {{ topic.topic_type|title }}</p>
+                <p><strong>Level:</strong> {{ topic.difficulty|title }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Panel (Right) -->
+    <div class="quiz-panel">
+        <div class="panel-header">
+            <i class="fas fa-lightbulb"></i> Learn & Quiz
+        </div>
+        
+        <div class="quiz-question">
+            "Look around this scene. Can you identify the key elements of {{ topic.topic }}?"
+        </div>
+        
+        <div class="hint-box" id="hint1">
+            💡 Hint 1: Look at the main subject in the center
+        </div>
+        <div class="hint-box" id="hint2">
+            💡 Hint 2: Notice the environment and setting
+        </div>
+        <div class="hint-box" id="hint3">
+            💡 Hint 3: What time period or location does this represent?
+        </div>
+        
+        <div class="answer-box" id="answerBox">
+            🎉 This is {{ topic.topic }}!
+        </div>
+        
+        <button class="quiz-btn hint-btn" onclick="showHint()">
+            <i class="fas fa-eye"></i> Show Hint
+        </button>
+        <button class="quiz-btn answer-btn" onclick="showAnswer()">
+            <i class="fas fa-check"></i> Reveal Answer
+        </button>
+    </div>
+
+    <!-- Drag Hint -->
+    <div class="drag-hint" id="dragHint">
+        <i class="fas fa-arrows-alt"></i>
+        <span>Drag to look around</span>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-controls">
+        <button class="control-btn" onclick="zoomIn()" title="Zoom In">
+            <i class="fas fa-search-plus"></i>
+        </button>
+        <button class="control-btn" onclick="zoomOut()" title="Zoom Out">
+            <i class="fas fa-search-minus"></i>
+        </button>
+        <button class="control-btn" onclick="resetView()" title="Reset View">
+            <i class="fas fa-sync"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Pannellum 360 Viewer JS -->
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+<script>
+let viewer = null;
+let hintCount = 0;
+
+{% if topic.image_url %}
+// Initialize Pannellum 360 viewer
+viewer = pannellum.viewer('panorama', {
+    type: 'equirectangular',
+    panorama: '{{ topic.image_url }}',
+    autoLoad: true,
+    autoRotate: -2,
+    compass: false,
+    showZoomCtrl: false,
+    showFullscreenCtrl: false,
+    hfov: 100,
+    minHfov: 50,
+    maxHfov: 120,
+    pitch: 0,
+    yaw: 0,
+    hotSpotDebug: false,
+    sceneFadeDuration: 1000
+});
+
+// Hide drag hint after interaction
+document.getElementById('panorama').addEventListener('mousedown', function() {
+    document.getElementById('dragHint').style.display = 'none';
+});
+{% endif %}
+
+// Zoom controls
+function zoomIn() {
+    if (viewer) {
+        let hfov = viewer.getHfov();
+        viewer.setHfov(Math.max(50, hfov - 10));
+    }
+}
+
+function zoomOut() {
+    if (viewer) {
+        let hfov = viewer.getHfov();
+        viewer.setHfov(Math.min(120, hfov + 10));
+    }
+}
+
+function resetView() {
+    if (viewer) {
+        viewer.setYaw(0);
+        viewer.setPitch(0);
+        viewer.setHfov(100);
+    }
+}
+
+// Quiz functions
+function showHint() {
+    hintCount++;
+    if (hintCount <= 3) {
+        document.getElementById('hint' + hintCount).classList.add('show');
+    }
+    if (hintCount >= 3) {
+        document.querySelector('.hint-btn').disabled = true;
+        document.querySelector('.hint-btn').textContent = 'All hints shown';
+    }
+}
+
+function showAnswer() {
+    document.getElementById('answerBox').classList.add('show');
+}
+
+// Auto-hide hint after 5 seconds
+setTimeout(() => {
+    const hint = document.getElementById('dragHint');
+    if (hint) hint.style.opacity = '0';
+}, 5000);
+</script>
+{% endblock %}

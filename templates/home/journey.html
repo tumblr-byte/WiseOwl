@@ -1,0 +1,933 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ topic.topic }} - WiseOwl{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+<style>
+.journey-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1A2A52 100%);
+    position: relative;
+}
+
+/* Scene Navigation */
+.scene-nav {
+    background: rgba(0,0,0,0.9);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #E4C77F;
+}
+
+.scene-tabs {
+    display: flex;
+    gap: 1rem;
+}
+
+.scene-tab {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.scene-tab.active {
+    background: #E4C77F;
+    color: #1A2A52;
+}
+
+.scene-tab.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.scene-tab i {
+    font-size: 1.2rem;
+}
+
+/* Main Content */
+.journey-main {
+    display: grid;
+    grid-template-columns: 350px 1fr 350px;
+    gap: 1.5rem;
+    padding: 2rem;
+    min-height: calc(100vh - 80px);
+}
+
+/* Left Panel - Narration */
+.narration-panel {
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(228,199,127,0.3);
+    overflow-y: auto;
+}
+
+.panel-title {
+    color: #E4C77F;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.narration-text {
+    color: rgba(255,255,255,0.9);
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+/* Center - 360 Viewer */
+.viewer-panel {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid #E4C77F;
+}
+
+#panorama {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+}
+
+.viewer-controls {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    z-index: 100;
+}
+
+.control-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.7);
+    border: 2px solid #E4C77F;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.control-btn:hover {
+    background: #E4C77F;
+    color: #1A2A52;
+}
+
+/* Right Panel - Actions */
+.actions-panel {
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(228,199,127,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.action-card {
+    background: rgba(255,255,255,0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.action-card h3 {
+    color: #E4C77F;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quiz-btn, .chat-btn, .regen-btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quiz-btn {
+    background: linear-gradient(135deg, #E4C77F, #D4B76F);
+    color: #1A2A52;
+}
+
+.quiz-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(228,199,127,0.4);
+}
+
+.chat-btn {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.chat-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Simple Scene Editor */
+.json-toggle {
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.json-toggle:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.simple-editor-wrapper {
+    margin-top: 1rem;
+    display: none;
+}
+
+.simple-editor-wrapper.show {
+    display: block;
+}
+
+.editor-field {
+    margin-bottom: 1rem;
+}
+
+.editor-field label {
+    display: block;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.simple-input, .simple-select {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.simple-input::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.simple-input:focus, .simple-select:focus {
+    outline: none;
+    border-color: #E4C77F;
+    background: rgba(255,255,255,0.15);
+}
+
+.simple-select option {
+    background: #1A2A52;
+    color: white;
+}
+
+.regen-btn {
+    background: #1A2A52;
+    color: white;
+    margin-top: 0.5rem;
+}
+
+.regen-btn:hover {
+    background: #2D4A7C;
+}
+
+/* Progress */
+.progress-card {
+    text-align: center;
+}
+
+.score-display {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #E4C77F;
+    margin: 0.5rem 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #E4C77F, #D4B76F);
+    transition: width 0.5s ease;
+}
+
+/* Owl Chat Modal */
+.chat-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-modal.show {
+    display: flex;
+}
+
+.chat-box {
+    background: white;
+    border-radius: 16px;
+    width: 500px;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background: #1A2A52;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.chat-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+}
+
+.chat-message.user {
+    background: #E4C77F;
+    color: #1A2A52;
+    margin-left: 2rem;
+}
+
+.chat-message.owl {
+    background: #f0f0f0;
+    color: #1A2A52;
+    margin-right: 2rem;
+}
+
+.chat-message.typing {
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.chat-input-area {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.chat-send {
+    padding: 0.75rem 1.5rem;
+    background: #1A2A52;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+@media (max-width: 1200px) {
+    .journey-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .narration-panel, .actions-panel {
+        max-height: 300px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="journey-container">
+    <!-- Scene Navigation -->
+    <div class="scene-nav">
+        <div class="scene-tabs">
+            {% for scene in scenes %}
+            <div class="scene-tab {% if scene.scene_number == current_scene.scene_number %}active{% endif %} {% if scene.scene_number not in topic.scenes_unlocked %}locked{% endif %}"
+                 onclick="{% if scene.scene_number in topic.scenes_unlocked %}window.location.href='{% url 'home:journey' topic.id %}?scene={{ scene.scene_number }}'{% endif %}">
+                <i class="fas fa-{% if scene.scene_number in topic.scenes_unlocked %}unlock{% else %}lock{% endif %}"></i>
+                <span>Scene {{ scene.scene_number }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="display:flex;gap:1rem;">
+            <a href="{% url 'home:home' %}" class="nav-btn" style="color:white;text-decoration:none;padding:0.5rem 1rem;background:rgba(255,255,255,0.1);border-radius:8px;">
+                <i class="fas fa-home"></i> Home
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="journey-main">
+        <!-- Left: Narration -->
+        <div class="narration-panel">
+            <div class="panel-title">
+                <i class="fas fa-book-open"></i>
+                {{ current_scene.title }}
+            </div>
+            <div class="narration-text">
+                {{ current_scene.narration }}
+            </div>
+        </div>
+
+        <!-- Center: 360 Viewer -->
+        <div class="viewer-panel">
+            {% if current_scene.image_url %}
+            <div id="panorama"></div>
+            <div class="viewer-controls">
+                <button class="control-btn" onclick="zoomIn()" title="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="control-btn" onclick="resetView()" title="Reset">
+                    <i class="fas fa-sync"></i>
+                </button>
+                <button class="control-btn" onclick="zoomOut()" title="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+            </div>
+            {% elif current_scene.generation_status == 'demo' %}
+            <div id="demoPlaceholder" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg, #1A2A52, #2D4A7C);color:white;padding:2rem;">
+                <div style="text-align:center;max-width:500px;">
+                    <i class="fas fa-image" style="font-size:4rem;color:#E4C77F;margin-bottom:1rem;"></i>
+                    <h3 style="color:#E4C77F;margin-bottom:1rem;">Demo Journey - Ready to Visualize!</h3>
+                    <p style="line-height:1.8;color:rgba(255,255,255,0.9);margin-bottom:1.5rem;">
+                        This demo has pre-written educational content. Click below to generate the 360° immersive view!
+                    </p>
+                    <button onclick="generateDemoImage()" id="generateDemoBtn"
+                            style="padding:1rem 2rem;background:linear-gradient(135deg, #E4C77F, #D4B76F);color:#1A2A52;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-size:1.1rem;box-shadow:0 5px 15px rgba(228,199,127,0.4);transition:all 0.3s;animation:buttonPulse 2s infinite;">
+                        <i class="fas fa-magic"></i> Generate 360° Scene Now!
+                    </button>
+                    <style>
+                        @keyframes buttonPulse {
+                            0%, 100% { transform: scale(1); box-shadow: 0 5px 15px rgba(228,199,127,0.4); }
+                            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(228,199,127,0.6); }
+                        }
+                        #generateDemoBtn:hover {
+                            transform: scale(1.08) !important;
+                            box-shadow: 0 10px 30px rgba(228,199,127,0.7) !important;
+                        }
+                    </style>
+                    <p style="font-size:0.85rem;color:rgba(255,255,255,0.6);margin-top:1rem;">
+                        ⚡ Takes 30-60 seconds to create your immersive view
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:white;">
+                <div style="text-align:center;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:#E4C77F;"></i>
+                    <p style="margin-top:1rem;">Generating your custom 360° scene...</p>
+                    <p style="font-size:0.9rem;color:rgba(255,255,255,0.7);margin-top:0.5rem;">This may take 30-60 seconds</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right: Actions -->
+        <div class="actions-panel">
+            <!-- Quiz -->
+            <div class="action-card">
+                <h3><i class="fas fa-question-circle"></i> Quiz</h3>
+                <button class="quiz-btn" onclick="window.location.href='{% url 'home:quiz' topic.id current_scene.scene_number %}'">
+                    <i class="fas fa-play"></i>
+                    Take Quiz
+                </button>
+            </div>
+
+            <!-- Owl Chat -->
+            <div class="action-card">
+                <h3><i class="fas fa-comments"></i> Ask WiseOwl</h3>
+                <button class="chat-btn" onclick="openChat()">
+                    <i class="fas fa-comment-dots"></i>
+                    Chat with Owl
+                </button>
+            </div>
+
+            <!-- Progress -->
+            <div class="action-card progress-card">
+                <h3><i class="fas fa-trophy"></i> Progress</h3>
+                <div class="score-display">{{ topic.total_score }}</div>
+                <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;">Total Points</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% widthratio topic.scenes_unlocked|length 3 100 %}%"></div>
+                </div>
+                <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:0.5rem;">
+                    {{ topic.scenes_unlocked|length }}/3 Scenes Unlocked
+                </p>
+            </div>
+
+            <!-- Simple Scene Editor -->
+            <div class="action-card">
+                <h3><i class="fas fa-magic"></i> Customize Scene</h3>
+                <button class="json-toggle" onclick="toggleEditor()">
+                    <i class="fas fa-edit"></i> Edit This Scene
+                </button>
+                <div class="simple-editor-wrapper" id="simpleEditor">
+                    <div style="background:rgba(228,199,127,0.1);padding:0.75rem;border-radius:8px;margin-bottom:1rem;border-left:3px solid #E4C77F;">
+                        <p style="color:rgba(255,255,255,0.9);font-size:0.85rem;margin:0;">
+                            <i class="fas fa-magic" style="color:#E4C77F;"></i> 
+                            <strong>Make this scene your own!</strong> Add your ideas and choose how you want to see it.
+                        </p>
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label><i class="fas fa-lightbulb" style="color:#E4C77F;"></i> Your Creative Ideas</label>
+                        <input type="text" id="addToScene" class="simple-input" placeholder="e.g., add marketplace, show people working, add trees...">
+                        <small style="color:rgba(255,255,255,0.6);font-size:0.8rem;display:block;margin-top:0.3rem;">What would make this scene more interesting?</small>
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label><i class="fas fa-camera" style="color:#E4C77F;"></i> Camera Angle</label>
+                        <select id="cameraAngle" class="simple-select">
+                            <option value="front">👁️ Front View</option>
+                            <option value="aerial">🦅 Bird's Eye View</option>
+                            <option value="closeup">🔍 Close-up View</option>
+                            <option value="wide">🌄 Wide Panoramic</option>
+                            <option value="ground">🚶 Ground Level</option>
+                        </select>
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label><i class="fas fa-sun" style="color:#E4C77F;"></i> Time of Day</label>
+                        <select id="timeOfDay" class="simple-select">
+                            <option value="day">☀️ Daytime</option>
+                            <option value="sunset">🌅 Sunset</option>
+                            <option value="night">🌙 Night</option>
+                            <option value="dawn">🌄 Dawn</option>
+                        </select>
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label><i class="fas fa-palette" style="color:#E4C77F;"></i> Color Mood</label>
+                        <select id="colorPalette" class="simple-select">
+                            <option value="natural">🌿 Natural Colors</option>
+                            <option value="vibrant">🎨 Vibrant & Colorful</option>
+                            <option value="warm">🔥 Warm Tones (Orange/Red)</option>
+                            <option value="cool">❄️ Cool Tones (Blue/Green)</option>
+                            <option value="dramatic">⚡ Dramatic (High Contrast)</option>
+                            <option value="soft">🌸 Soft & Pastel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label><i class="fas fa-image" style="color:#E4C77F;"></i> Scene Focus</label>
+                        <select id="composition" class="simple-select">
+                            <option value="balanced">⚖️ Balanced View</option>
+                            <option value="center">🎯 Center Focus</option>
+                            <option value="depth">🏔️ Deep Perspective</option>
+                            <option value="wide">🌊 Wide Landscape</option>
+                            <option value="detailed">🔬 Detailed Close-up</option>
+                        </select>
+                    </div>
+                    
+                    <button class="regen-btn" onclick="regenerateSimple()">
+                        <i class="fas fa-magic"></i>
+                        Create My Scene
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Owl Chat Modal -->
+<div class="chat-modal" id="chatModal">
+    <div class="chat-box">
+        <div class="chat-header">
+            <h3><i class="fas fa-owl"></i> WiseOwl</h3>
+            <button class="chat-close" onclick="closeChat()">&times;</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message owl">
+                Hello! I'm WiseOwl. Ask me anything about {{ topic.topic }}!
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="chat-send" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+<script>
+let viewer = null;
+
+{% if current_scene.image_url %}
+viewer = pannellum.viewer('panorama', {
+    type: 'equirectangular',
+    panorama: '{{ current_scene.image_url }}',
+    autoLoad: true,
+    autoRotate: -2,
+    showZoomCtrl: false,
+    showFullscreenCtrl: false,
+    hfov: 100,
+    minHfov: 50,
+    maxHfov: 120
+});
+{% endif %}
+
+// Generate demo image automatically
+function generateDemoImage() {
+    const btn = document.getElementById('generateDemoBtn');
+    const placeholder = document.getElementById('demoPlaceholder');
+    
+    // Disable button
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating 360° Scene...';
+    btn.style.background = '#999';
+    btn.style.cursor = 'not-allowed';
+    
+    // Show progress message
+    placeholder.innerHTML = `
+        <div style="text-align:center;">
+            <i class="fas fa-spinner fa-spin" style="font-size:4rem;color:#E4C77F;margin-bottom:1rem;"></i>
+            <h3 style="color:#E4C77F;margin-bottom:1rem;">Creating Your 360° Scene...</h3>
+            <p style="color:rgba(255,255,255,0.9);line-height:1.8;">
+                Our AI is generating an immersive panoramic view.<br>
+                This takes 30-60 seconds. Please wait...
+            </p>
+            <div style="margin-top:1.5rem;background:rgba(255,255,255,0.1);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.9rem;color:rgba(255,255,255,0.7);">
+                    ⚡ Using Bria FIBO API to create photorealistic 360° imagery
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Call backend to generate image
+    fetch('{% url "home:regenerate_scene" topic.id current_scene.scene_number %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+            enhanced_prompt: '{{ current_scene.description }}',
+            generate_demo: true
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Reload page to show the new image
+            location.reload();
+        } else {
+            alert('Error generating image: ' + data.message);
+            location.reload();
+        }
+    })
+    .catch(err => {
+        alert('Network error. Please try again.');
+        location.reload();
+    });
+}
+
+function zoomIn() {
+    if (viewer) viewer.setHfov(Math.max(50, viewer.getHfov() - 10));
+}
+
+function zoomOut() {
+    if (viewer) viewer.setHfov(Math.min(120, viewer.getHfov() + 10));
+}
+
+function resetView() {
+    if (viewer) {
+        viewer.setYaw(0);
+        viewer.setPitch(0);
+        viewer.setHfov(100);
+    }
+}
+
+function toggleEditor() {
+    document.getElementById('simpleEditor').classList.toggle('show');
+}
+
+let isRegenerating = false;
+
+function regenerateScene() {
+    if (isRegenerating) {
+        alert('Already regenerating... please wait!');
+        return;
+    }
+    
+    const jsonText = document.getElementById('sceneJSON').value;
+    const regenBtn = document.querySelector('.regen-btn');
+    
+    try {
+        const jsonScene = JSON.parse(jsonText);
+        
+        // Disable button and show loading
+        isRegenerating = true;
+        regenBtn.disabled = true;
+        regenBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Regenerating...';
+        
+        fetch('{% url "home:regenerate_scene" topic.id current_scene.scene_number %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ json_scene: jsonScene })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Update image without full page reload
+                if (viewer) {
+                    viewer.destroy();
+                }
+                viewer = pannellum.viewer('panorama', {
+                    type: 'equirectangular',
+                    panorama: data.image_url,
+                    autoLoad: true,
+                    autoRotate: -2,
+                    showZoomCtrl: false,
+                    showFullscreenCtrl: false,
+                    hfov: 100,
+                    minHfov: 50,
+                    maxHfov: 120
+                });
+                
+                alert('Scene regenerated successfully!');
+                isRegenerating = false;
+                regenBtn.disabled = false;
+                regenBtn.innerHTML = '<i class="fas fa-sync"></i> Regenerate Scene';
+            } else {
+                alert('Error: ' + data.message);
+                isRegenerating = false;
+                regenBtn.disabled = false;
+                regenBtn.innerHTML = '<i class="fas fa-sync"></i> Regenerate Scene';
+            }
+        })
+        .catch(err => {
+            alert('Network error. Please try again.');
+            isRegenerating = false;
+            regenBtn.disabled = false;
+            regenBtn.innerHTML = '<i class="fas fa-sync"></i> Regenerate Scene';
+        });
+    } catch (e) {
+        alert('Invalid JSON format');
+        isRegenerating = false;
+    }
+}
+
+function regenerateSimple() {
+    if (isRegenerating) {
+        alert('Already regenerating... please wait!');
+        return;
+    }
+    
+    // Get user inputs
+    const userIdeas = document.getElementById('addToScene').value.trim();
+    const cameraAngle = document.getElementById('cameraAngle').value;
+    const timeOfDay = document.getElementById('timeOfDay').value;
+    const colorPalette = document.getElementById('colorPalette').value;
+    const composition = document.getElementById('composition').value;
+    
+    // Build enhanced prompt with all customizations
+    let enhancedPrompt = '{{ current_scene.description }}';
+    
+    if (userIdeas) {
+        enhancedPrompt += `. Additionally: ${userIdeas}`;
+    }
+    
+    // Add all visual preferences
+    enhancedPrompt += `. Camera: ${cameraAngle} angle. Lighting: ${timeOfDay}. Color palette: ${colorPalette}. Composition: ${composition} style.`;
+    
+    const regenBtn = document.querySelector('.regen-btn');
+    
+    // Disable button and show loading
+    isRegenerating = true;
+    regenBtn.disabled = true;
+    regenBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+    
+    // Call backend with enhanced prompt
+    fetch('{% url "home:regenerate_scene" topic.id current_scene.scene_number %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+            enhanced_prompt: enhancedPrompt,
+            user_ideas: userIdeas,
+            camera_angle: cameraAngle,
+            time_of_day: timeOfDay,
+            color_palette: colorPalette,
+            composition: composition
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update image without full page reload
+            if (viewer) {
+                viewer.destroy();
+            }
+            viewer = pannellum.viewer('panorama', {
+                type: 'equirectangular',
+                panorama: data.image_url,
+                autoLoad: true,
+                autoRotate: -2,
+                showZoomCtrl: false,
+                showFullscreenCtrl: false,
+                hfov: 100,
+                minHfov: 50,
+                maxHfov: 120
+            });
+            
+            alert('✨ Your custom scene is ready!');
+            isRegenerating = false;
+            regenBtn.disabled = false;
+            regenBtn.innerHTML = '<i class="fas fa-sync"></i> Regenerate Scene';
+        } else {
+            alert('Error: ' + data.message);
+            isRegenerating = false;
+            regenBtn.disabled = false;
+            regenBtn.innerHTML = '<i class="fas fa-sync"></i> Regenerate Scene';
+        }
+    })
+    .catch(err => {
+        alert('Network error. Please try again.');
+        isRegenerating = false;
+        regenBtn.disabled = false;
+        regenBtn.innerHTML = '<i class="fas fa-sync"></i> Regenerate Scene';
+    });
+}
+
+function openChat() {
+    document.getElementById('chatModal').classList.add('show');
+}
+
+function closeChat() {
+    document.getElementById('chatModal').classList.remove('show');
+}
+
+let isChatting = false;
+
+function sendMessage() {
+    if (isChatting) return;
+    
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+    
+    const messagesDiv = document.getElementById('chatMessages');
+    messagesDiv.innerHTML += `<div class="chat-message user">${message}</div>`;
+    input.value = '';
+    
+    // Show typing indicator
+    messagesDiv.innerHTML += `<div class="chat-message owl typing" id="typingIndicator"><i class="fas fa-spinner fa-spin"></i> WiseOwl is thinking...</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    isChatting = true;
+    input.disabled = true;
+    
+    fetch('{% url "home:owl_chat" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            message: message,
+            context: '{{ topic.topic }}'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Remove typing indicator
+        document.getElementById('typingIndicator').remove();
+        
+        if (data.status === 'success') {
+            messagesDiv.innerHTML += `<div class="chat-message owl">${data.response}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } else {
+            messagesDiv.innerHTML += `<div class="chat-message owl">Sorry, I'm having trouble right now. Please try again!</div>`;
+        }
+        
+        isChatting = false;
+        input.disabled = false;
+        input.focus();
+    })
+    .catch(err => {
+        document.getElementById('typingIndicator').remove();
+        messagesDiv.innerHTML += `<div class="chat-message owl">Sorry, I'm having trouble connecting. Please try again!</div>`;
+        isChatting = false;
+        input.disabled = false;
+    });
+}
+</script>
+{% endblock %}
