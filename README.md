@@ -192,28 +192,6 @@ BRIA_API_KEY=your_bria_api_key_here
 - Mobile app
 - Offline mode
 
-## 🤝 Contributing
-
-Contributions welcome! Please read our contributing guidelines.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Team
-
-Built for **FIBO Hackathon 2024**
-
-## 🙏 Acknowledgments
-
-- **Groq** for AI content generation
-- **Bria** for FIBO 360° image generation
-- **Pannellum.js** for 360° viewer
-- **Django** community
-
-## 📞 Contact
-
-For questions or feedback, please open an issue.
 
 ---
 
