@@ -2,10 +2,6 @@
 
 > Transform education into immersive time-travel experiences
 
-[![FIBO Hackathon 2024](https://img.shields.io/badge/FIBO-Hackathon%202024-blue)](https://fibo.com)
-[![Python](https://img.shields.io/badge/Python-3.11-green)](https://python.org)
-[![Django](https://img.shields.io/badge/Django-5.2-darkgreen)](https://djangoproject.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 ## 💡 The Problem
 
